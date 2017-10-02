@@ -532,7 +532,52 @@ r1cs_ppzksnark_processed_verification_key<ppT> r1cs_ppzksnark_verifier_process_v
 
     leave_block("Call to r1cs_ppzksnark_verifier_process_vk");
 
-    return pvk;
+       unsigned icLength = vk.encoded_IC_query.rest.indices.size() + 1;
+
+    std::cout << "\tfunction verifyingKey() internal returns (VerifyingKey vk) {"                                       <<  "\n";
+    std::cout << "\t\tvk.A = "                        << outputPointG2Affine(vk.alphaA_g2)                              << ";\n";
+    std::cout << "\t\tvk.B = "                        << outputPointG1Affine(vk.alphaB_g1)                              << ";\n";
+    std::cout << "\t\tvk.C = "                        << outputPointG2Affine(vk.alphaC_g2)                              << ";\n";
+    std::cout << "\t\tvk.gamma = "                    << outputPointG2Affine(vk.gamma_g2)                               << ";\n";
+    std::cout << "\t\tvk.gammaBeta1 = "               << outputPointG1Affine(vk.gamma_beta_g1)                          << ";\n";
+    std::cout << "\t\tvk.gammaBeta2 = "               << outputPointG2Affine(vk.gamma_beta_g2)                          << ";\n";
+    std::cout << "\t\tvk.Z = "                        << outputPointG2Affine(vk.rC_Z_g2)                                << ";\n";
+    std::cout << "\t\tvk.IC = new Pairing.G1Point[](" << icLength  << ")"                                               << ";\n";
+    std::cout << "\t\tvk.IC[0] = "                    << outputPointG1Affine(vk.encoded_IC_query.first)                 << ";\n";
+    for (size_t i = 1; i < icLength; ++i) {
+       auto vkICi = outputPointG1Affine(vk.encoded_IC_query.rest.values[i - 1]);
+        std::cout << "\t\tvk.IC[" << i << "] = " << vkICi                                                               << ";\n";
+    }
+    std::cout << "\t\tVerified('VK loaded successfully')"                                                               << ";\n";
+    std::cout << "\t\t}"                                                                                                <<  "\n";
+
+    std::cout << "\tfunction verify(uint[] input, Proof proof) internal returns (int) {"                                <<  "\n";
+    std::cout << "VerifyingKey memory vk = verifyingKey();"                                                             <<  "\n";
+    std::cout << "require(input.length + 1 == vk.IC.length);"                                                           <<  "\n";
+    std::cout << "// Compute the linear combination vk_x"                                                               <<  "\n";
+    std::cout << "Pairing.G1Point memory vk_x = Pairing.G1Point(0, 0);"                                                 <<  "\n";
+    std::cout << "for (uint i = 0; i < input.length; i++)"                                                              <<  "\n";
+    std::cout << "\tvk_x = Pairing.add(vk_x, Pairing.mul(vk.IC[i + 1], input[i]));"                                     <<  "\n";
+    std::cout << "\tvk_x = Pairing.add(vk_x, vk.IC[0]);"                                                                <<  "\n";
+    std::cout << "if (!Pairing.pairingProd2(proof.A, vk.A, Pairing.negate(proof.A_p), Pairing.P2())) return 1;"         <<  "\n";
+    std::cout << "if (!Pairing.pairingProd2(vk.B, proof.B, Pairing.negate(proof.B_p), Pairing.P2())) return 2;"         <<  "\n";
+    std::cout << "if (!Pairing.pairingProd2(proof.C, vk.C, Pairing.negate(proof.C_p), Pairing.P2())) return 3;"         <<  "\n";
+    std::cout << "if (!Pairing.pairingProd3("                                                                           <<  "\n";
+    std::cout << "\t\tproof.K, vk.gamma,"                                                                               <<  "\n";
+    std::cout << "\t\tPairing.negate(Pairing.add(vk_x, Pairing.add(proof.A, proof.C))), vk.gammaBeta2,"                 <<  "\n";
+    std::cout << "\t\tPairing.negate(vk.gammaBeta1), proof.B"                                                           <<  "\n";
+    std::cout << ")) return 4;"                                                                                         <<  "\n";
+    std::cout << "if (!Pairing.pairingProd3("                                                                           <<  "\n";
+    std::cout << "\t\tPairing.add(vk_x, proof.A), proof.B,"                                                             <<  "\n";
+    std::cout << "\t\tPairing.negate(proof.H), vk.Z,"                                                                   <<  "\n";
+    std::cout << "\t\tPairing.negate(proof.C), Pairing.P2()"                                                            <<  "\n";
+    std::cout << ")) return 5;"                                                                                         <<  "\n";
+    std::cout << "return 0;"                                                                                            <<  "\n";
+    std::cout << "\t}"                                                                                                  <<  "\n";
+
+
+
+   return pvk;
 }
 
 template <typename ppT>
