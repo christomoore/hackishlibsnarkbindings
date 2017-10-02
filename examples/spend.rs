@@ -3,7 +3,7 @@ extern crate sha2;
 extern crate rand;
 
 use sha2::digest::Digest;
-use sha2::sha2::Sha256;
+use sha2::{Sha256, Digest};
 use rand::{Rng,thread_rng};
 use std::io::Read;
 use std::fs::File;
@@ -30,8 +30,9 @@ fn sha256<'a, I: IntoIterator<Item=&'a u8>>(i: I) -> Vec<u8> {
         h.input(&[*b]);
     }
 
-    let mut a = [0; 32];
-    h.result(&mut a);
+   // let mut a = [0; 32];
+    //h.result(&mut a);
+    let mut a = h.result();
 
     a.to_vec()
 }
